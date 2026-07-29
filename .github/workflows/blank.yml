@@ -6,8 +6,8 @@ permissions:
 on:
   push:
     branches:
-	-master
-	-stroke-recognition
+      - master
+      - stroke-recognition
 
   workflow_dispatch:
 
