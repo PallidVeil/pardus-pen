@@ -93,6 +93,8 @@ public:
     void drawRecognizedShape(int decision,
                              const StrokeVariables &variables,
                              const StrokeResult &result);
+    int performStrokeRecognition();
+    void applyRecognitionResult(int decision);
 #ifdef LIBARCHIVE
     void saveAll(QString filename);
     void loadArchive(const QString& filename);

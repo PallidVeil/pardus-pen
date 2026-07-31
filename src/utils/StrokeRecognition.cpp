@@ -132,7 +132,6 @@ void CalculateDeltaTheta(StrokeVariables &variables) {
 
     for (int i = 0; i < variables.pointCount - 2; i++) {
         variables.deltaTheta[i] = variables.theta[i + 1] - variables.theta[i];
-        // Normalize the angle difference to [-180°, 180°]
         if (variables.deltaTheta[i] > 180)
             variables.deltaTheta[i] -= 360;
 
@@ -224,7 +223,6 @@ void findTurnRegions(StrokeVariables &variables) {
 
     int validRegionCount = 0;
     // we filter out the turn regions that do not meet the STRONG_REGION_TURN threshold, keeping only the valid ones
-    // in later versions i can substract the last delta theta if its a gap
     for (int i = 0; i < variables.turnRegionCount; i++) {
         if (std::abs(variables.turnRegionSum[i]) >= STRONG_REGION_TURN) {
             variables.turnRegionStart[validRegionCount] = variables.turnRegionStart[i];
@@ -342,7 +340,6 @@ float CalculateShapeFitError(
     const int regionStart[],
     const int regionEnd[],
     const StrokeVariables &variables) {
-    // check it again later
     int cornerCount = 0;
 
     if (shapeType == RECOG_TRIANGLE)
@@ -352,7 +349,6 @@ float CalculateShapeFitError(
     else
         return 0.0f;
 
-    // İdeal şeklin ortalama kenar uzunluğu
     float averageEdgeLength = 0.0f;
 
     for (int i = 0; i < cornerCount; i++) {
@@ -766,7 +762,6 @@ float CalculateShapeFitTriangle(const StrokeFeatures &features,
             newturnRegionStart[i + 1] = variables.turnRegionStart[i];
             newturnRegionEnd[i + 1] = variables.turnRegionEnd[i];
         }
-        // add 0 and 63 as the first region
     } else if (features.turnRegionCount == 3 && std::abs(360 - std::abs(features.totalTurnDegree)) < ANGLE_THRESHOLD) {
         for (int i = 0; i < 3; i++) {
             newturnRegionStart[i] = variables.turnRegionStart[i];
@@ -810,7 +805,6 @@ float CalculateShapeFitSquare(const StrokeFeatures &features,
             newturnRegionStart[i + 1] = variables.turnRegionStart[i];
             newturnRegionEnd[i + 1] = variables.turnRegionEnd[i];
         }
-        // add 0 and 63 as the first region
     } else if (features.turnRegionCount == 4) {
         for (int i = 0; i < 4; i++) {
             newturnRegionStart[i] = variables.turnRegionStart[i];
@@ -1037,8 +1031,6 @@ float ClosureScore(const StrokeFeatures &features, const StrokeVariables &variab
 }
 
 float noiseScore(const StrokeFeatures &features) {
-
-    // the minimum is -20 and the maximum is + 20 and the zero point starts at 200 diff
     float noiseValue = features.totalAbsTurnDegree - std::abs(features.totalTurnDegree);
 
     if (noiseValue <= 400)

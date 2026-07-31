@@ -389,111 +389,57 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
             if (!curs.drawing.contains(id) || !curs.drawing[id]){
                 break;
             }
-
             recognitionPoints[recognitionPoints.size()] = pos;
-
             curs.drawing[id] = false;
             curs.hide(id);
-
             if (penType == PENTEXT){
                 recognitionPoints.clear();
                 break;
             }
-
-            if (penType != ERASER &&
-                geo.size(id) < 2 &&
-                penType != SELECTION){
-                int oldPenStyle = penStyle;
-
+            if (penType != ERASER && geo.size(id) < 2 && penType != SELECTION){
+                int fpenStype = penStyle;
                 penStyle = LINE;
-
                 addPoint(id, pos + QPointF(0, 1));
-
                 painter.begin(&image);
                 drawLineToFunc(id, 1.0);
                 painter.end();
-
-                penStyle = oldPenStyle;
-            }
-
-            int decision = RECOG_UNKNOWN;
-            if (recognitionEnabled &&
-                penType != ERASER &&
-                penType != SELECTION &&
-                penType != PENTEXT &&
-                penStyle == SPLINE){
-                decision = stroke_recognition(
-                    recognitionPoints,
-                    recognitionVariables,
-                    recognitionResult);
-
-                printf("Recognition decision: %d\n", decision);
+                penStyle = fpenStype;
             }
             curEventButtons = 0;
 
+            int decision = performStrokeRecognition();
+            bool recognitionSuccessful =
+                decision != RECOG_UNKNOWN &&
+                decision != RECOG_LENGTH_ERROR && 
+                decision != RECOG_START_ERROR;
+
             if (num_of_press == 0 || id == -1){
                 curs.clear();
-
                 if (penType == SELECTION){
                     addPoint(id, pos);
                     createSelection(id);
                     update();
                 }
-
-                bool recognitionSuccessful =
-                decision != RECOG_UNKNOWN &&
-                decision != RECOG_LENGTH_ERROR;
-
+                if (recognitionSuccessful){
+                    applyRecognitionResult(decision);
+                }
                 if (penType != ERASER){
-                    if (recognitionSuccessful){
-                        // Merge the user's freehand drawing with the previous canvas.
-                        QImage freehandImage = background->image.copy();
-
-                        QPainter freehandPainter(&freehandImage);
-                        freehandPainter.drawImage(QPointF(0, 0), image.toImage());
-                        freehandPainter.end();
-
-                        // save the freehandImage to history.
-                        addImage(freehandImage);
-
-                        // clear the free stroke layer.
-                        image.fill(QColor("transparent"));
-
-                        // draw only the ideal shape.
-                        drawRecognizedShape(
-                            decision,
-                            recognitionVariables,
-                            recognitionResult);
-                    }
-
-                    // If recognition returns Unknown, keep the freehand drawing;
-                    // otherwise, merge the ideal shape with the background.
                     background->applyImage(image.toImage());
-
                     image = QPixmap::fromImage(background->image);
                     background->image.fill(QColor("transparent"));
                 }
-
                 if (penType == SELECTION){
                     recognitionPoints.clear();
                     break;
                 }
-
-                geo.clearAll();
-
-                // Save the final result:
-                // use the ideal shape when recognition succeeds,
-                // or the original freehand drawing when it fails.
+                geo.clearAll(); 
                 addImage(image.toImage());
             }
-
             if (penType != ERASER &&
             penStyle != SPLINE){
                 update();
             }
-
             recognitionPoints.clear();
-
             break;
     }
     setPen(ev_pen);

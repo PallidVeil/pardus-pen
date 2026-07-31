@@ -227,3 +227,39 @@ void DrawingWidget::drawRecognizedShape(
     painter.end();
     update();
 }
+
+int DrawingWidget::performStrokeRecognition(){
+    int decision = RECOG_UNKNOWN;
+    if (recognitionEnabled &&
+        penType != ERASER &&
+        penType != SELECTION &&
+        penType != PENTEXT &&
+        penStyle == SPLINE){
+        decision = stroke_recognition(
+            recognitionPoints,
+            recognitionVariables,
+            recognitionResult);
+
+        printf("Recognition decision: %d\n", decision);
+    } else {
+    return RECOG_START_ERROR;
+    }
+    return decision;
+}
+
+void applyRecognitionResult(int decision){
+    // Merge the user's freehand drawing with the previous canvas.
+    QImage freehandImage = background->image.copy();
+    QPainter freehandPainter(&freehandImage);
+    freehandPainter.drawImage(QPointF(0, 0), image.toImage());
+    freehandPainter.end();
+    // save the freehandImage to history.
+    addImage(freehandImage);
+    // clear the free stroke layer.
+    image.fill(QColor("transparent"));
+    // draw only the ideal shape.
+    drawRecognizedShape(
+    decision,
+    recognitionVariables,
+    recognitionResult);
+}
