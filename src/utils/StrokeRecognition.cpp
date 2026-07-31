@@ -657,8 +657,8 @@ bool MakeOppositeEdgesParallel(float edgeTheta[4]) {
 }
 
 bool CreateIdealShape(
-    int regionStart[],
-    int regionEnd[],
+    const int regionStart[],
+    const int regionEnd[],
     int regionCount,
     const StrokeVariables &variables,
     StrokeResult &result) {
@@ -714,7 +714,7 @@ bool CreateIdealShape(
         averageYForLine[i] = cornerY;
     }
 
-    int firstLine[4] = {0, 1, 2, 3};
+    const int firstLine[4] = {0, 1, 2, 3};
     int secondLine[4] = {2, 0, 1, 2};
 
     if (regionCount == 4)
@@ -933,8 +933,8 @@ float CalculateCircleRadiusDiff(const StrokeVariables &variables,
     int groupSize[TOTAL_GROUP];
 
     float radius[RESAMPLE_POINTS];
-    float radiusDiffPoint[TOTAL_GROUP];
-    float radiusAvgDiffPoint[TOTAL_GROUP];
+    float radiusDiffPoint[TOTAL_GROUP]{};
+    float radiusAvgDiffPoint[TOTAL_GROUP]{};
 
     CalculateGroupSize(pointLength, groupSize);
 
@@ -987,9 +987,10 @@ float CalculateCircleRadiusDiff(const StrokeVariables &variables,
             groupRadiusSum /
             static_cast<float>(groupSize[i]);
 
-        float groupRadiusDiff = 0.0f;
 
         if (groupRadiusAvg > 0.0001f) {
+            float groupRadiusDiff = 0.0f;
+
             for (int j = 0; j < groupSize[i]; j++) {
                 groupRadiusDiff += std::abs(
                                        groupRadiusAvg -
@@ -1076,19 +1077,19 @@ float CircleScore(const StrokeScore &strokeScore,
 
 void CreateDistanceMatrix(float endpointDistanceMatrix[], const StrokeVariables &variables) {
     const int endpointCount = RESAMPLE_POINTS / 8;
-    float x1, y1, x2, y2;
+    
     for (int i = 0; i < endpointCount; i++) {
-        x1 = variables.points[i].x();
-        y1 = variables.points[i].y();
+        float x1 = variables.points[i].x();
+        float y1 = variables.points[i].y();
         for (int j = 0; j < endpointCount; j++) {
-            x2 = variables.points[RESAMPLE_POINTS - j - 1].x();
-            y2 = variables.points[RESAMPLE_POINTS - j - 1].y();
+            float x2 = variables.points[RESAMPLE_POINTS - j - 1].x();
+            float y2 = variables.points[RESAMPLE_POINTS - j - 1].y();
             endpointDistanceMatrix[i * endpointCount + j] = FindLength(x1, y1, x2, y2);
         }
     }
 }
 
-void FindClosestPointsPerRow(float endpointDistanceMatrix[], int closestEndpointPairs[]) {
+void FindClosestPointsPerRow(const float endpointDistanceMatrix[], int closestEndpointPairs[]) {
     // Stores flat indices inside endpointDistanceMatrix.
     // Local endpoint index = flatIndex % endpointCount.
     const int endpointCount = RESAMPLE_POINTS / 8;
