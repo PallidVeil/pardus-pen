@@ -2,8 +2,7 @@
 #include "widgets/DrawingWidget.h"
 
 bool resample(const QMap<long long, QPointF> &points,
-              StrokeVariables &variables)
-{
+              StrokeVariables &variables) {
     if (points.size() < 2)
         return false;
 
@@ -16,8 +15,7 @@ bool resample(const QMap<long long, QPointF> &points,
 
     QPointF previousPoint = previousIterator.value();
 
-    for (; currentIterator != points.constEnd(); ++currentIterator)
-    {
+    for (; currentIterator != points.constEnd(); ++currentIterator) {
         const QPointF currentPoint = currentIterator.value();
 
         const float dx =
@@ -51,8 +49,7 @@ bool resample(const QMap<long long, QPointF> &points,
     for (;
          currentIterator != points.constEnd() &&
          outputIndex < RESAMPLE_POINTS;
-         ++currentIterator)
-    {
+         ++currentIterator) {
         const QPointF segmentEnd = currentIterator.value();
 
         const float dx =
@@ -64,8 +61,7 @@ bool resample(const QMap<long long, QPointF> &points,
         float remainingSegmentLength =
             std::sqrt(dx * dx + dy * dy);
 
-        if (remainingSegmentLength <= EPSILON)
-        {
+        if (remainingSegmentLength <= EPSILON) {
             segmentStart = segmentEnd;
             continue;
         }
@@ -80,8 +76,7 @@ bool resample(const QMap<long long, QPointF> &points,
 
         while (accumulatedDistance + remainingSegmentLength >=
                    sampleDistance &&
-               outputIndex < RESAMPLE_POINTS)
-        {
+               outputIndex < RESAMPLE_POINTS) {
             const float requiredDistance =
                 sampleDistance - accumulatedDistance;
 
@@ -111,8 +106,7 @@ bool resample(const QMap<long long, QPointF> &points,
         Floating-point yuvarlaması yüzünden 63 yerine
         62 nokta üretilirse kalan kısmı güvenli biçimde doldur.
     */
-    while (outputIndex < RESAMPLE_POINTS)
-    {
+    while (outputIndex < RESAMPLE_POINTS) {
         variables.points[outputIndex] = lastPoint;
         outputIndex++;
     }
@@ -123,10 +117,8 @@ bool resample(const QMap<long long, QPointF> &points,
     return true;
 }
 
-void CalculateDeltaTheta(StrokeVariables &variables)
-{
-    for (int i = 0; i < variables.pointCount - 1; i++)
-    {
+void CalculateDeltaTheta(StrokeVariables &variables) {
+    for (int i = 0; i < variables.pointCount - 1; i++) {
         float dx =
             variables.points[i + 1].x() -
             variables.points[i].x();
@@ -138,8 +130,7 @@ void CalculateDeltaTheta(StrokeVariables &variables)
         variables.theta[i] = std::atan2(dy, dx) * 180.0f / M_PI;
     }
 
-    for (int i = 0; i < variables.pointCount - 2; i++)
-    {
+    for (int i = 0; i < variables.pointCount - 2; i++) {
         variables.deltaTheta[i] = variables.theta[i + 1] - variables.theta[i];
         // Normalize the angle difference to [-180°, 180°]
         if (variables.deltaTheta[i] > 180)
@@ -150,32 +141,26 @@ void CalculateDeltaTheta(StrokeVariables &variables)
     }
 }
 
-float TotalTurnDegree(const StrokeVariables &variables)
-{
+float TotalTurnDegree(const StrokeVariables &variables) {
     float totalTurnDegree = 0;
-    for (int i = 0; i < variables.pointCount - 2; i++)
-    {
+    for (int i = 0; i < variables.pointCount - 2; i++) {
         totalTurnDegree += variables.deltaTheta[i];
     }
     return totalTurnDegree;
 }
 
-float TotalAbsTurnDegree(const StrokeVariables &variables)
-{
+float TotalAbsTurnDegree(const StrokeVariables &variables) {
     float totalAbsTurnDegree = 0;
-    for (int i = 0; i < variables.pointCount - 2; i++)
-    {
+    for (int i = 0; i < variables.pointCount - 2; i++) {
         totalAbsTurnDegree += std::abs(variables.deltaTheta[i]);
     }
     return totalAbsTurnDegree;
 }
 
-float TotalPathLength(const StrokeVariables &variables)
-{
+float TotalPathLength(const StrokeVariables &variables) {
     float totalLength = 0.0f;
 
-    for (int i = 0; i < variables.pointCount - 1; i++)
-    {
+    for (int i = 0; i < variables.pointCount - 1; i++) {
         float dx = variables.points[i + 1].x() - variables.points[i].x();
         float dy = variables.points[i + 1].y() - variables.points[i].y();
 
@@ -185,8 +170,7 @@ float TotalPathLength(const StrokeVariables &variables)
     return totalLength;
 }
 
-void findTurnRegions(StrokeVariables &variables)
-{
+void findTurnRegions(StrokeVariables &variables) {
     /**
      * @brief Detects continuous turning regions along the stroke.
      *
@@ -205,31 +189,23 @@ void findTurnRegions(StrokeVariables &variables)
     int gapCount = 0;
     const int MAX_GAP = 1;
 
-    for (int i = 0; i < variables.pointCount - 2; i++)
-    {
+    for (int i = 0; i < variables.pointCount - 2; i++) {
         float turn = std::abs(variables.deltaTheta[i]);
 
-        if (turn > MIN_CHANGE_DEGREE)
-        {
-            if (!inRegion)
-            {
+        if (turn > MIN_CHANGE_DEGREE) {
+            if (!inRegion) {
                 variables.turnRegionStart[variables.turnRegionCount] = i;
                 variables.turnRegionSum[variables.turnRegionCount] = variables.deltaTheta[i];
                 inRegion = true;
-            }
-            else
-            {
+            } else {
                 variables.turnRegionSum[variables.turnRegionCount] += variables.deltaTheta[i];
             }
 
             gapCount = 0;
-        }
-        else if (inRegion)
-        {
+        } else if (inRegion) {
             gapCount++;
 
-            if (gapCount > MAX_GAP)
-            {
+            if (gapCount > MAX_GAP) {
                 variables.turnRegionEnd[variables.turnRegionCount] = i - gapCount;
                 variables.turnRegionCount++;
 
@@ -239,8 +215,7 @@ void findTurnRegions(StrokeVariables &variables)
         }
     }
 
-    if (inRegion)
-    {
+    if (inRegion) {
         variables.turnRegionEnd[variables.turnRegionCount] =
             variables.pointCount - 3 - gapCount;
 
@@ -250,10 +225,8 @@ void findTurnRegions(StrokeVariables &variables)
     int validRegionCount = 0;
     // we filter out the turn regions that do not meet the STRONG_REGION_TURN threshold, keeping only the valid ones
     // in later versions i can substract the last delta theta if its a gap
-    for (int i = 0; i < variables.turnRegionCount; i++)
-    {
-        if (std::abs(variables.turnRegionSum[i]) >= STRONG_REGION_TURN)
-        {
+    for (int i = 0; i < variables.turnRegionCount; i++) {
+        if (std::abs(variables.turnRegionSum[i]) >= STRONG_REGION_TURN) {
             variables.turnRegionStart[validRegionCount] = variables.turnRegionStart[i];
             variables.turnRegionEnd[validRegionCount] = variables.turnRegionEnd[i];
             variables.turnRegionSum[validRegionCount] = variables.turnRegionSum[i];
@@ -265,8 +238,7 @@ void findTurnRegions(StrokeVariables &variables)
     variables.turnRegionCount = validRegionCount;
 }
 
-float StraightnessScore(const StrokeFeatures &features, const StrokeVariables &variables)
-{
+float StraightnessScore(const StrokeFeatures &features, const StrokeVariables &variables) {
     float dx =
         variables.points[variables.pointCount - 1].x() - variables.points[0].x();
 
@@ -291,12 +263,10 @@ float StraightnessScore(const StrokeFeatures &features, const StrokeVariables &v
     return straightness;
 }
 
-int DirectionChangeCount(const StrokeVariables &variables)
-{
+int DirectionChangeCount(const StrokeVariables &variables) {
     int directionChangeCount = 0;
 
-    for (int i = 1; i < variables.pointCount - 2; i++)
-    {
+    for (int i = 1; i < variables.pointCount - 2; i++) {
         if (std::abs(variables.deltaTheta[i]) < MIN_CHANGE_DEGREE ||
             std::abs(variables.deltaTheta[i - 1]) < MIN_CHANGE_DEGREE)
             continue;
@@ -308,19 +278,16 @@ int DirectionChangeCount(const StrokeVariables &variables)
     return directionChangeCount;
 }
 
-float LineScore(const StrokeFeatures &features)
-{
+float LineScore(const StrokeFeatures &features) {
     float turnScore =
         20.0f -
         (std::abs(features.totalTurnDegree) / 180.0f) * 40.0f;
 
-    if (turnScore > 20.0f)
-    {
+    if (turnScore > 20.0f) {
         turnScore = 20.0f;
     }
 
-    if (turnScore < -20.0f)
-    {
+    if (turnScore < -20.0f) {
         turnScore = -20.0f;
     }
 
@@ -332,12 +299,9 @@ float LineScore(const StrokeFeatures &features)
     */
     float regionScore;
 
-    if (features.turnRegionCount == 0)
-    {
+    if (features.turnRegionCount == 0) {
         regionScore = 20.0f;
-    }
-    else
-    {
+    } else {
         regionScore = -10.0f * features.turnRegionCount;
     }
     float degreePenalty = 0;
@@ -363,8 +327,7 @@ float LineScore(const StrokeFeatures &features)
     return score;
 }
 
-float TriangleScore(const StrokeScore &strokeScore)
-{
+float TriangleScore(const StrokeScore &strokeScore) {
     float score = 0.0f;
 
     score += strokeScore.triangleShapeFit * 0.80f;
@@ -378,8 +341,7 @@ float CalculateShapeFitError(
     const std::array<QPointF, 4> &idealCorners,
     const int regionStart[],
     const int regionEnd[],
-    const StrokeVariables &variables)
-{
+    const StrokeVariables &variables) {
     // check it again later
     int cornerCount = 0;
 
@@ -393,8 +355,7 @@ float CalculateShapeFitError(
     // İdeal şeklin ortalama kenar uzunluğu
     float averageEdgeLength = 0.0f;
 
-    for (int i = 0; i < cornerCount; i++)
-    {
+    for (int i = 0; i < cornerCount; i++) {
         int next = (i + 1) % cornerCount;
 
         float dx = idealCorners[next].x() - idealCorners[i].x();
@@ -411,8 +372,7 @@ float CalculateShapeFitError(
     float totalNormalizedError = 0.0f;
     int comparedPointCount = 0;
 
-    for (int corner = 0; corner < cornerCount; corner++)
-    {
+    for (int corner = 0; corner < cornerCount; corner++) {
         int start = regionStart[corner];
         int end = regionEnd[corner];
 
@@ -420,8 +380,7 @@ float CalculateShapeFitError(
             (start == 0 && end == variables.pointCount - 1) ||
             (start == variables.pointCount - 1 && end == 0);
 
-        if (isVirtualClosure)
-        {
+        if (isVirtualClosure) {
             float dx1 = variables.points[0].x() - idealCorners[corner].x();
             float dy1 = variables.points[0].y() - idealCorners[corner].y();
 
@@ -446,13 +405,11 @@ float CalculateShapeFitError(
             continue;
         }
 
-        for (int i = start; i <= end; i++)
-        {
+        for (int i = start; i <= end; i++) {
             int pointIndex = i + 1;
 
             if (pointIndex < 0 ||
-                pointIndex >= variables.pointCount)
-            {
+                pointIndex >= variables.pointCount) {
                 continue;
             }
 
@@ -499,8 +456,7 @@ bool FindLineIntersection(
     float theta2,
 
     float *cornerX,
-    float *cornerY)
-{
+    float *cornerY) {
     /**
      * @brief Computes the intersection point of two lines.
      *
@@ -560,8 +516,7 @@ bool FindLineToEdge(
     const StrokeVariables &variables,
     float *centerX,
     float *centerY,
-    float *averageTheta)
-{
+    float *averageTheta) {
     /**
      * @brief Fits a representative line to a stroke edge.
      *
@@ -608,8 +563,7 @@ bool FindLineToEdge(
     int numberOfPoints =
         ((endIndex - startIndex + variables.pointCount) % variables.pointCount) + 1;
 
-    for (int offset = 0; offset < numberOfPoints; offset++)
-    {
+    for (int offset = 0; offset < numberOfPoints; offset++) {
         int pointIndex =
             (startIndex + offset) % variables.pointCount;
 
@@ -617,8 +571,7 @@ bool FindLineToEdge(
         sumY += variables.points[pointIndex].y();
         pointCount++;
 
-        if (pointIndex < variables.pointCount - 1)
-        {
+        if (pointIndex < variables.pointCount - 1) {
             float radians =
                 variables.theta[pointIndex] * M_PI / 180.0f;
 
@@ -641,8 +594,7 @@ bool FindLineToEdge(
     return true;
 }
 
-float LineAngleDifference(float angle1, float angle2)
-{
+float LineAngleDifference(float angle1, float angle2) {
     float difference =
         std::fmod(std::abs(angle1 - angle2), 180.0f);
 
@@ -652,8 +604,7 @@ float LineAngleDifference(float angle1, float angle2)
     return difference;
 }
 
-float AverageParallelAngle(float angle1, float angle2)
-{
+float AverageParallelAngle(float angle1, float angle2) {
     float radians1 =
         angle1 * 2.0f * M_PI / 180.0f;
 
@@ -667,8 +618,7 @@ float AverageParallelAngle(float angle1, float angle2)
     return averageRadians * 0.5f * 180.0f / M_PI;
 }
 
-bool MakeOppositeEdgesParallel(float edgeTheta[4])
-{
+bool MakeOppositeEdgesParallel(float edgeTheta[4]) {
     /**
      * @brief Adjusts opposite edges to share the same orientation.
      *
@@ -683,13 +633,11 @@ bool MakeOppositeEdgesParallel(float edgeTheta[4])
      */
     const float PARALLEL_TOLERANCE = 20.0f;
 
-    if (LineAngleDifference(edgeTheta[0], edgeTheta[2]) > PARALLEL_TOLERANCE)
-    {
+    if (LineAngleDifference(edgeTheta[0], edgeTheta[2]) > PARALLEL_TOLERANCE) {
         return false;
     }
 
-    if (LineAngleDifference(edgeTheta[1], edgeTheta[3]) > PARALLEL_TOLERANCE)
-    {
+    if (LineAngleDifference(edgeTheta[1], edgeTheta[3]) > PARALLEL_TOLERANCE) {
         return false;
     }
 
@@ -713,8 +661,7 @@ bool CreateIdealShape(
     int regionEnd[],
     int regionCount,
     const StrokeVariables &variables,
-    StrokeResult &result)
-{
+    StrokeResult &result) {
     /**
      * @brief Generates an ideal geometric representation of the detected shape.
      *
@@ -741,8 +688,7 @@ bool CreateIdealShape(
     float cornerY = 0.0f;
     float avgTheta = 0.0f;
 
-    for (int i = 0; i < regionCount; i++)
-    {
+    for (int i = 0; i < regionCount; i++) {
         int nextRegion =
             (i + 1) % regionCount;
 
@@ -774,8 +720,7 @@ bool CreateIdealShape(
     if (regionCount == 4)
         secondLine[0] = 3;
 
-    if (regionCount == 4)
-    {
+    if (regionCount == 4) {
         bool canCreateParallelShape =
             MakeOppositeEdgesParallel(averageThetaForLine);
 
@@ -786,8 +731,7 @@ bool CreateIdealShape(
     float idealCornerXValue = 0.0f;
     float idealCornerYValue = 0.0f;
 
-    for (int i = 0; i < regionCount; i++)
-    {
+    for (int i = 0; i < regionCount; i++) {
         bool intersectionFound = FindLineIntersection(
             averageXForLine[firstLine[i]],
             averageYForLine[firstLine[i]],
@@ -809,38 +753,29 @@ bool CreateIdealShape(
 
 float CalculateShapeFitTriangle(const StrokeFeatures &features,
                                 const StrokeVariables &variables,
-                                StrokeResult &result)
-{
+                                StrokeResult &result) {
     float score = 0.0f;
     int newturnRegionCount = features.turnRegionCount;
     int newturnRegionStart[5];
     int newturnRegionEnd[5];
-    if (features.turnRegionCount == 2)
-    {
+    if (features.turnRegionCount == 2) {
         newturnRegionCount += 1;
         newturnRegionStart[0] = variables.pointCount - 1;
         newturnRegionEnd[0] = 0;
-        for (int i = 0; i < 2; i++)
-        {
+        for (int i = 0; i < 2; i++) {
             newturnRegionStart[i + 1] = variables.turnRegionStart[i];
             newturnRegionEnd[i + 1] = variables.turnRegionEnd[i];
         }
         // add 0 and 63 as the first region
-    }
-    else if (features.turnRegionCount == 3 && std::abs(360 - std::abs(features.totalTurnDegree)) < ANGLE_THRESHOLD)
-    {
-        for (int i = 0; i < 3; i++)
-        {
+    } else if (features.turnRegionCount == 3 && std::abs(360 - std::abs(features.totalTurnDegree)) < ANGLE_THRESHOLD) {
+        for (int i = 0; i < 3; i++) {
             newturnRegionStart[i] = variables.turnRegionStart[i];
             newturnRegionEnd[i] = variables.turnRegionEnd[i];
         }
-    }
-    else
-    {
+    } else {
         return 0.0f;
     }
-    if (newturnRegionCount == 3)
-    {
+    if (newturnRegionCount == 3) {
         bool doesfunctionwork = CreateIdealShape(
             newturnRegionStart, newturnRegionEnd,
             newturnRegionCount, variables, result);
@@ -853,9 +788,7 @@ float CalculateShapeFitTriangle(const StrokeFeatures &features,
             newturnRegionEnd,
             variables);
         return score;
-    }
-    else
-    {
+    } else {
         score = 0.0f;
     }
 
@@ -864,38 +797,29 @@ float CalculateShapeFitTriangle(const StrokeFeatures &features,
 
 float CalculateShapeFitSquare(const StrokeFeatures &features,
                               const StrokeVariables &variables,
-                              StrokeResult &result)
-{
+                              StrokeResult &result) {
     float score = 0.0f;
     int newturnRegionCount = features.turnRegionCount;
     int newturnRegionStart[5];
     int newturnRegionEnd[5];
-    if (features.turnRegionCount == 3 && std::abs(270 - std::abs(features.totalTurnDegree)) < ANGLE_THRESHOLD)
-    {
+    if (features.turnRegionCount == 3 && std::abs(270 - std::abs(features.totalTurnDegree)) < ANGLE_THRESHOLD) {
         newturnRegionCount += 1;
         newturnRegionStart[0] = variables.pointCount - 1;
         newturnRegionEnd[0] = 0;
-        for (int i = 0; i < 3; i++)
-        {
+        for (int i = 0; i < 3; i++) {
             newturnRegionStart[i + 1] = variables.turnRegionStart[i];
             newturnRegionEnd[i + 1] = variables.turnRegionEnd[i];
         }
         // add 0 and 63 as the first region
-    }
-    else if (features.turnRegionCount == 4)
-    {
-        for (int i = 0; i < 4; i++)
-        {
+    } else if (features.turnRegionCount == 4) {
+        for (int i = 0; i < 4; i++) {
             newturnRegionStart[i] = variables.turnRegionStart[i];
             newturnRegionEnd[i] = variables.turnRegionEnd[i];
         }
-    }
-    else
-    {
+    } else {
         return 0.0f;
     }
-    if (newturnRegionCount == 4)
-    {
+    if (newturnRegionCount == 4) {
         bool doesfunctionwork = CreateIdealShape(
             newturnRegionStart, newturnRegionEnd,
             newturnRegionCount, variables, result);
@@ -908,26 +832,21 @@ float CalculateShapeFitSquare(const StrokeFeatures &features,
             newturnRegionEnd,
             variables);
         return score;
-    }
-    else
-    {
+    } else {
         score = 0.0f;
     }
 
     return score;
 }
 
-void CalculateGroupSize(int pointLength, int *groupSize)
-{
+void CalculateGroupSize(int pointLength, int *groupSize) {
     int baseSize = pointLength / TOTAL_GROUP;
     int remainder = pointLength % TOTAL_GROUP;
 
-    for (int i = 0; i < TOTAL_GROUP; i++)
-    {
+    for (int i = 0; i < TOTAL_GROUP; i++) {
         groupSize[i] = baseSize;
 
-        if (remainder > 0)
-        {
+        if (remainder > 0) {
             groupSize[i]++;
             remainder--;
         }
@@ -936,13 +855,11 @@ void CalculateGroupSize(int pointLength, int *groupSize)
 
 float CalculateCircleScore(
     const float *radiusDiffPoint,
-    const float *radiusAvgDiffPoint)
-{
+    const float *radiusAvgDiffPoint) {
     float localDiffAvg = 0.0f;
     float globalDiffAvg = 0.0f;
 
-    for (int i = 0; i < TOTAL_GROUP; i++)
-    {
+    for (int i = 0; i < TOTAL_GROUP; i++) {
         localDiffAvg += radiusDiffPoint[i];
         globalDiffAvg += radiusAvgDiffPoint[i];
     }
@@ -985,8 +902,7 @@ float CalculateCircleScore(
     return finalScore;
 }
 
-float FindLength(float x1, float y1, float x2, float y2)
-{
+float FindLength(float x1, float y1, float x2, float y2) {
     float dx = x2 - x1;
     float dy = y2 - y1;
 
@@ -994,8 +910,7 @@ float FindLength(float x1, float y1, float x2, float y2)
 }
 
 float CalculateCircleRadiusDiff(const StrokeVariables &variables,
-                                StrokeResult &result)
-{
+                                StrokeResult &result) {
     /**
      * @brief Evaluates how closely the stroke resembles a circle.
      *
@@ -1025,8 +940,7 @@ float CalculateCircleRadiusDiff(const StrokeVariables &variables,
 
     float centerX = 0.0f;
     float centerY = 0.0f;
-    for (int i = 0; i < pointLength; ++i)
-    {
+    for (int i = 0; i < pointLength; ++i) {
         centerX += variables.points[i].x();
         centerY += variables.points[i].y();
     }
@@ -1037,8 +951,7 @@ float CalculateCircleRadiusDiff(const StrokeVariables &variables,
 
     float totalRadiusSum = 0.0f;
 
-    for (int i = 0; i < pointLength; i++)
-    {
+    for (int i = 0; i < pointLength; i++) {
         radius[i] = FindLength(
             variables.points[i].x(),
             variables.points[i].y(),
@@ -1057,10 +970,8 @@ float CalculateCircleRadiusDiff(const StrokeVariables &variables,
 
     int startIndex = 0;
 
-    for (int i = 0; i < TOTAL_GROUP; i++)
-    {
-        if (groupSize[i] <= 0)
-        {
+    for (int i = 0; i < TOTAL_GROUP; i++) {
+        if (groupSize[i] <= 0) {
             radiusDiffPoint[i] = 0.0f;
             radiusAvgDiffPoint[i] = 0.0f;
             continue;
@@ -1068,8 +979,7 @@ float CalculateCircleRadiusDiff(const StrokeVariables &variables,
 
         float groupRadiusSum = 0.0f;
 
-        for (int j = 0; j < groupSize[i]; j++)
-        {
+        for (int j = 0; j < groupSize[i]; j++) {
             groupRadiusSum += radius[startIndex + j];
         }
 
@@ -1079,10 +989,8 @@ float CalculateCircleRadiusDiff(const StrokeVariables &variables,
 
         float groupRadiusDiff = 0.0f;
 
-        if (groupRadiusAvg > 0.0001f)
-        {
-            for (int j = 0; j < groupSize[i]; j++)
-            {
+        if (groupRadiusAvg > 0.0001f) {
+            for (int j = 0; j < groupSize[i]; j++) {
                 groupRadiusDiff += std::abs(
                                        groupRadiusAvg -
                                        radius[startIndex + j]) /
@@ -1092,9 +1000,7 @@ float CalculateCircleRadiusDiff(const StrokeVariables &variables,
             radiusDiffPoint[i] =
                 groupRadiusDiff /
                 static_cast<float>(groupSize[i]);
-        }
-        else
-        {
+        } else {
             radiusDiffPoint[i] = 0.0f;
         }
 
@@ -1110,8 +1016,7 @@ float CalculateCircleRadiusDiff(const StrokeVariables &variables,
         radiusAvgDiffPoint);
 }
 
-float ClosureScore(const StrokeFeatures &features, const StrokeVariables &variables)
-{
+float ClosureScore(const StrokeFeatures &features, const StrokeVariables &variables) {
     if (features.totalLength <= 0.0f)
         return 0.0f;
 
@@ -1130,8 +1035,7 @@ float ClosureScore(const StrokeFeatures &features, const StrokeVariables &variab
     return std::clamp(score, 0.0f, 1.0f) * 100.0f;
 }
 
-float noiseScore(const StrokeFeatures &features)
-{
+float noiseScore(const StrokeFeatures &features) {
 
     // the minimum is -20 and the maximum is + 20 and the zero point starts at 200 diff
     float noiseValue = features.totalAbsTurnDegree - std::abs(features.totalTurnDegree);
@@ -1142,8 +1046,7 @@ float noiseScore(const StrokeFeatures &features)
         return -20.0f;
 }
 
-float SquareScore(const StrokeScore &strokeScore)
-{
+float SquareScore(const StrokeScore &strokeScore) {
     float score = 0.0f;
 
     score += strokeScore.squareShapeFit * 0.80f;
@@ -1154,8 +1057,7 @@ float SquareScore(const StrokeScore &strokeScore)
 
 float CircleScore(const StrokeScore &strokeScore,
                   const StrokeFeatures &features,
-                  const StrokeVariables &variables)
-{
+                  const StrokeVariables &variables) {
     float score = 0;
 
     score += strokeScore.circleRadiusScore * 0.80;
@@ -1172,16 +1074,13 @@ float CircleScore(const StrokeScore &strokeScore,
     return score;
 }
 
-void CreateDistanceMatrix(float endpointDistanceMatrix[], const StrokeVariables &variables)
-{
+void CreateDistanceMatrix(float endpointDistanceMatrix[], const StrokeVariables &variables) {
     const int endpointCount = RESAMPLE_POINTS / 8;
     float x1, y1, x2, y2;
-    for (int i = 0; i < endpointCount; i++)
-    {
+    for (int i = 0; i < endpointCount; i++) {
         x1 = variables.points[i].x();
         y1 = variables.points[i].y();
-        for (int j = 0; j < endpointCount; j++)
-        {
+        for (int j = 0; j < endpointCount; j++) {
             x2 = variables.points[RESAMPLE_POINTS - j - 1].x();
             y2 = variables.points[RESAMPLE_POINTS - j - 1].y();
             endpointDistanceMatrix[i * endpointCount + j] = FindLength(x1, y1, x2, y2);
@@ -1189,44 +1088,34 @@ void CreateDistanceMatrix(float endpointDistanceMatrix[], const StrokeVariables 
     }
 }
 
-void FindClosestPointsPerRow(float endpointDistanceMatrix[], int closestEndpointPairs[])
-{
+void FindClosestPointsPerRow(float endpointDistanceMatrix[], int closestEndpointPairs[]) {
     // Stores flat indices inside endpointDistanceMatrix.
     // Local endpoint index = flatIndex % endpointCount.
     const int endpointCount = RESAMPLE_POINTS / 8;
-    for (int i = 0; i < endpointCount; i++)
-    {
+    for (int i = 0; i < endpointCount; i++) {
         int rowStart = i * endpointCount;
         int smallestDistanceIndex1 = rowStart;
         int smallestDistanceIndex2 = rowStart + 1;
 
         if (endpointDistanceMatrix[rowStart] <
-            endpointDistanceMatrix[rowStart + 1])
-        {
+            endpointDistanceMatrix[rowStart + 1]) {
             smallestDistanceIndex1 = rowStart;
             smallestDistanceIndex2 = rowStart + 1;
-        }
-        else
-        {
+        } else {
             smallestDistanceIndex1 = rowStart + 1;
             smallestDistanceIndex2 = rowStart;
         }
 
-        for (int j = 2; j < endpointCount; j++)
-        {
+        for (int j = 2; j < endpointCount; j++) {
             int currentIndex = rowStart + j;
 
             if (endpointDistanceMatrix[currentIndex] <
-                endpointDistanceMatrix[smallestDistanceIndex2])
-            {
+                endpointDistanceMatrix[smallestDistanceIndex2]) {
                 if (endpointDistanceMatrix[currentIndex] <
-                    endpointDistanceMatrix[smallestDistanceIndex1])
-                {
+                    endpointDistanceMatrix[smallestDistanceIndex1]) {
                     smallestDistanceIndex2 = smallestDistanceIndex1;
                     smallestDistanceIndex1 = currentIndex;
-                }
-                else
-                {
+                } else {
                     smallestDistanceIndex2 = currentIndex;
                 }
             }
@@ -1238,21 +1127,18 @@ void FindClosestPointsPerRow(float endpointDistanceMatrix[], int closestEndpoint
 
 int FindBestEndpointPair(
     const float endpointDistanceMatrix[],
-    const int closestEndpointPairs[])
-{
+    const int closestEndpointPairs[]) {
     const int endpointCount = RESAMPLE_POINTS / 8;
 
     float minDistance = 999999.0f;
     int bestPairIndex = -1;
 
-    for (int i = 0; i < endpointCount * 2; i += 2)
-    {
+    for (int i = 0; i < endpointCount * 2; i += 2) {
         float currentDistance =
             endpointDistanceMatrix[closestEndpointPairs[i]] +
             endpointDistanceMatrix[closestEndpointPairs[i + 1]];
 
-        if (currentDistance < minDistance)
-        {
+        if (currentDistance < minDistance) {
             minDistance = currentDistance;
             bestPairIndex = i;
         }
@@ -1266,8 +1152,7 @@ bool CreateEndpointCandidate(
     const int closestEndpointPairs[],
     int *startPoint,
     int *endPoint1,
-    int *endPoint2)
-{
+    int *endPoint2) {
     const int endpointCount = RESAMPLE_POINTS / 8;
 
     if (bestPairIndex < 0)
@@ -1299,8 +1184,7 @@ bool FindBestStartSegment(
     int endPoint2,
     int *startSegmentPoint1,
     int *startSegmentPoint2,
-    const StrokeVariables &variables)
-{
+    const StrokeVariables &variables) {
     const int endpointCount = RESAMPLE_POINTS / 8;
 
     if (startPoint < 0 || startPoint >= endpointCount)
@@ -1308,14 +1192,12 @@ bool FindBestStartSegment(
 
     *startSegmentPoint1 = startPoint;
 
-    if (startPoint == 0)
-    {
+    if (startPoint == 0) {
         *startSegmentPoint2 = startPoint + 1;
         return true;
     }
 
-    if (startPoint == endpointCount - 1)
-    {
+    if (startPoint == endpointCount - 1) {
         *startSegmentPoint2 = startPoint - 1;
         return true;
     }
@@ -1356,8 +1238,7 @@ bool PointIntersection(
     float x1, float x2, float y1, float y2,
     float x3, float x4, float y3, float y4,
     float *intersectionX,
-    float *intersectionY)
-{
+    float *intersectionY) {
     float d1 =
         (x2 - x1) * (y3 - y1) -
         (y2 - y1) * (x3 - x1);
@@ -1409,14 +1290,12 @@ bool PointIntersection(
 
 int calculateClosestPoint(
     const float endpointDistanceMatrix[],
-    const StrokeVariables &variables)
-{
+    const StrokeVariables &variables) {
 
     // since we cant get the totallength at this point of the algorithm we need to use a little trick to help us
     float averageSegmentLength = 0.0f;
 
-    for (int i = 0; i < 5; i++)
-    {
+    for (int i = 0; i < 5; i++) {
         averageSegmentLength += FindLength(
             variables.points[i].x(),
             variables.points[i].y(),
@@ -1431,10 +1310,8 @@ int calculateClosestPoint(
     float closestDistance = 9999.0f;
     int Index = -1;
 
-    for (int i = 0; i < RESAMPLE_POINTS; i++)
-    {
-        if (endpointDistanceMatrix[i] < closestDistance)
-        {
+    for (int i = 0; i < RESAMPLE_POINTS; i++) {
+        if (endpointDistanceMatrix[i] < closestDistance) {
             Index = i;
             closestDistance = endpointDistanceMatrix[i];
         }
@@ -1450,13 +1327,11 @@ void FixPointArray(int startPoint,
                    bool addIntersection,
                    float intersectionX,
                    float intersectionY,
-                   StrokeVariables &variables)
-{
+                   StrokeVariables &variables) {
     // Copies the selected stroke segment to the beginning
     // of point_x and point_y and returns the new point count.
     int pointCount = 0;
-    if (startPoint == 0 && endPoint == RESAMPLE_POINTS - 1)
-    {
+    if (startPoint == 0 && endPoint == RESAMPLE_POINTS - 1) {
         variables.pointCount = RESAMPLE_POINTS;
         return;
     }
@@ -1464,20 +1339,17 @@ void FixPointArray(int startPoint,
     float sourceX[RESAMPLE_POINTS];
     float sourceY[RESAMPLE_POINTS];
 
-    for (int i = 0; i < RESAMPLE_POINTS; ++i)
-    {
+    for (int i = 0; i < RESAMPLE_POINTS; ++i) {
         sourceX[i] = variables.points[i].x();
         sourceY[i] = variables.points[i].y();
     }
 
-    if (addIntersection)
-    {
+    if (addIntersection) {
         variables.points[pointCount] = QPointF(intersectionX, intersectionY);
         pointCount++;
     }
 
-    for (int i = startPoint; i <= endPoint; ++i)
-    {
+    for (int i = startPoint; i <= endPoint; ++i) {
         if (pointCount >= RESAMPLE_POINTS)
             break;
 
@@ -1488,8 +1360,7 @@ void FixPointArray(int startPoint,
     variables.pointCount = pointCount;
 }
 
-void fixPointsForIntersection(StrokeVariables &variables)
-{
+void fixPointsForIntersection(StrokeVariables &variables) {
     float endpointDistanceMatrix[RESAMPLE_POINTS];
     int closestEndpointPairs[RESAMPLE_POINTS / 4];
 
@@ -1528,8 +1399,7 @@ void fixPointsForIntersection(StrokeVariables &variables)
             &endPoint1,
             &endPoint2);
 
-    if (endpointValid)
-    {
+    if (endpointValid) {
         // Decide whether the left or right segment of the start point
         // should be used for the intersection test.
         startSegmentFound =
@@ -1541,8 +1411,7 @@ void fixPointsForIntersection(StrokeVariables &variables)
                 &startSegmentPoint2,
                 variables);
 
-        if (startSegmentFound)
-        {
+        if (startSegmentFound) {
             // Check whether the two candidate segments intersect.
             pointsIntersect =
                 PointIntersection(
@@ -1570,8 +1439,7 @@ void fixPointsForIntersection(StrokeVariables &variables)
     // as a fallback closure method.
     if (endpointValid &&
         startSegmentFound &&
-        pointsIntersect)
-    {
+        pointsIntersect) {
         fixedStartPoint =
             std::max(
                 startSegmentPoint1,
@@ -1581,16 +1449,13 @@ void fixPointsForIntersection(StrokeVariables &variables)
             std::min(
                 endPoint1,
                 endPoint2);
-    }
-    else
-    {
+    } else {
         int closestIndex =
             calculateClosestPoint(
                 endpointDistanceMatrix,
                 variables);
 
-        if (closestIndex != -1)
-        {
+        if (closestIndex != -1) {
             fixedStartPoint =
                 closestIndex / endpointCount;
 
@@ -1614,27 +1479,22 @@ void fixPointsForIntersection(StrokeVariables &variables)
         variables);
 }
 
-int CalculateDecision(const StrokeScore &strokeScore)
-{
+int CalculateDecision(const StrokeScore &strokeScore) {
     float MaxPoint = 0.0;
     int maxScoredShape = RECOG_UNKNOWN;
-    if (strokeScore.triangleScore > MaxPoint)
-    {
+    if (strokeScore.triangleScore > MaxPoint) {
         MaxPoint = strokeScore.triangleScore;
         maxScoredShape = RECOG_TRIANGLE;
     }
-    if (strokeScore.squareScore > MaxPoint)
-    {
+    if (strokeScore.squareScore > MaxPoint) {
         MaxPoint = strokeScore.squareScore;
         maxScoredShape = RECOG_SQUARE;
     }
-    if (strokeScore.lineScore > MaxPoint)
-    {
+    if (strokeScore.lineScore > MaxPoint) {
         MaxPoint = strokeScore.lineScore;
         maxScoredShape = RECOG_LINE;
     }
-    if (strokeScore.circleScore > MaxPoint)
-    {
+    if (strokeScore.circleScore > MaxPoint) {
         MaxPoint = strokeScore.circleScore;
         maxScoredShape = RECOG_CIRCLE;
     }
@@ -1647,8 +1507,7 @@ int CalculateDecision(const StrokeScore &strokeScore)
 #ifdef DEBUG
 void printDebugLine(const StrokeScore &score,
                     const StrokeFeatures &features,
-                    const StrokeVariables &variables)
-{
+                    const StrokeVariables &variables) {
     printf("lineScore: %f\n", score.lineScore);
     printf("totalTurnDegree: %f\n", features.totalTurnDegree);
     printf("totalAbsTurnDegree: %f\n", features.totalAbsTurnDegree);
@@ -1669,8 +1528,7 @@ void printDebugLine(const StrokeScore &score,
 #endif
 
 void calculateFeatures(StrokeFeatures &features,
-                       const StrokeVariables &variables)
-{
+                       const StrokeVariables &variables) {
     features.totalTurnDegree = TotalTurnDegree(variables);
     features.totalAbsTurnDegree = TotalAbsTurnDegree(variables);
     features.totalLength = TotalPathLength(variables);
@@ -1683,8 +1541,7 @@ void calculateFeatures(StrokeFeatures &features,
 void calculateScore(StrokeScore &score,
                     const StrokeFeatures &features,
                     const StrokeVariables &variables,
-                    StrokeResult &result)
-{
+                    StrokeResult &result) {
     score.closureScore = ClosureScore(features, variables);
     score.triangleShapeFit = CalculateShapeFitTriangle(features, variables, result);
     score.squareShapeFit = CalculateShapeFitSquare(features, variables, result);
@@ -1698,8 +1555,7 @@ void calculateScore(StrokeScore &score,
     score.decision = CalculateDecision(score);
 }
 
-bool calculateProcess(const QMap<long long, QPointF> &points, StrokeVariables &variables)
-{
+bool calculateProcess(const QMap<long long, QPointF> &points, StrokeVariables &variables) {
     bool resampleOutput = resample(points, variables);
     if (!resampleOutput)
         return false;
@@ -1712,8 +1568,7 @@ bool calculateProcess(const QMap<long long, QPointF> &points, StrokeVariables &v
 
 int stroke_recognition(const QMap<long long, QPointF> &points,
                        StrokeVariables &variables,
-                       StrokeResult &result)
-{
+                       StrokeResult &result) {
     /*
      * Stroke recognition pipeline:
      *

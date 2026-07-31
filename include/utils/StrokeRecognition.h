@@ -7,17 +7,16 @@
 #include <QVector>
 #include <algorithm>
 
-namespace StrokeRecognitionConstants
-{
-    constexpr int RESAMPLE_POINTS = 64;
-    constexpr float MIN_CHANGE_DEGREE = 12.0f;
-    constexpr float STRONG_REGION_TURN = 60.0f;
-    constexpr float ANGLE_THRESHOLD = 45.0f;
-    constexpr float MIN_SCORE = 75.0f;
-    constexpr int TOTAL_GROUP = 8;
-    constexpr float ERROR_SCALE = 2.0f;
-    constexpr float CIRCLE_ANGLE_THRESHOLD = 60.0f;
-}
+namespace StrokeRecognitionConstants {
+constexpr int RESAMPLE_POINTS = 64;
+constexpr float MIN_CHANGE_DEGREE = 12.0f;
+constexpr float STRONG_REGION_TURN = 60.0f;
+constexpr float ANGLE_THRESHOLD = 45.0f;
+constexpr float MIN_SCORE = 75.0f;
+constexpr int TOTAL_GROUP = 8;
+constexpr float ERROR_SCALE = 2.0f;
+constexpr float CIRCLE_ANGLE_THRESHOLD = 60.0f;
+} // namespace StrokeRecognitionConstants
 
 inline constexpr int RESAMPLE_POINTS = StrokeRecognitionConstants::RESAMPLE_POINTS;
 inline constexpr float MIN_CHANGE_DEGREE = StrokeRecognitionConstants::MIN_CHANGE_DEGREE;
@@ -28,8 +27,7 @@ inline constexpr int TOTAL_GROUP = StrokeRecognitionConstants::TOTAL_GROUP;
 inline constexpr float ERROR_SCALE = StrokeRecognitionConstants::ERROR_SCALE;
 inline constexpr float CIRCLE_ANGLE_THRESHOLD = StrokeRecognitionConstants::CIRCLE_ANGLE_THRESHOLD;
 
-struct StrokeVariables
-{
+struct StrokeVariables {
     std::array<QPointF, RESAMPLE_POINTS> points{};
     std::array<float, RESAMPLE_POINTS - 1> theta{};
     std::array<float, RESAMPLE_POINTS - 2> deltaTheta{};
@@ -41,8 +39,7 @@ struct StrokeVariables
     int turnRegionCount = 0;
 };
 
-struct StrokeFeatures
-{
+struct StrokeFeatures {
     float totalTurnDegree = 0.0f;
     float totalAbsTurnDegree = 0.0f;
     float straightnessScore = 0.0f;
@@ -52,15 +49,13 @@ struct StrokeFeatures
     int turnRegionCount = 0;
 };
 
-struct StrokeResult
-{
+struct StrokeResult {
     std::array<QPointF, 4> idealCorners{};
     QPointF circleCenter{};
     float circleRadius = 0.0f;
 };
 
-struct StrokeScore
-{
+struct StrokeScore {
     float closureScore = 0.0f;
     float lineScore = 0.0f;
     float triangleScore = 0.0f;

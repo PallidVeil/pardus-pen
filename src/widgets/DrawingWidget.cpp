@@ -386,8 +386,7 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
             }
             break;
         case RELEASE:
-            if (!curs.drawing.contains(id) || !curs.drawing[id])
-            {
+            if (!curs.drawing.contains(id) || !curs.drawing[id]){
                 break;
             }
 
@@ -396,16 +395,14 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
             curs.drawing[id] = false;
             curs.hide(id);
 
-            if (penType == PENTEXT)
-            {
+            if (penType == PENTEXT){
                 recognitionPoints.clear();
                 break;
             }
 
             if (penType != ERASER &&
                 geo.size(id) < 2 &&
-                penType != SELECTION)
-            {
+                penType != SELECTION){
                 int oldPenStyle = penStyle;
 
                 penStyle = LINE;
@@ -424,8 +421,7 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
                 penType != ERASER &&
                 penType != SELECTION &&
                 penType != PENTEXT &&
-                penStyle == SPLINE)
-            {
+                penStyle == SPLINE){
                 decision = stroke_recognition(
                     recognitionPoints,
                     recognitionVariables,
@@ -435,12 +431,10 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
             }
             curEventButtons = 0;
 
-            if (num_of_press == 0 || id == -1)
-            {
+            if (num_of_press == 0 || id == -1){
                 curs.clear();
 
-                if (penType == SELECTION)
-                {
+                if (penType == SELECTION){
                     addPoint(id, pos);
                     createSelection(id);
                     update();
@@ -450,10 +444,8 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
                 decision != RECOG_UNKNOWN &&
                 decision != RECOG_LENGTH_ERROR;
 
-                if (penType != ERASER)
-                {
-                    if (recognitionSuccessful)
-                    {
+                if (penType != ERASER){
+                    if (recognitionSuccessful){
                         // Merge the user's freehand drawing with the previous canvas.
                         QImage freehandImage = background->image.copy();
 
@@ -482,8 +474,7 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
                     background->image.fill(QColor("transparent"));
                 }
 
-                if (penType == SELECTION)
-                {
+                if (penType == SELECTION){
                     recognitionPoints.clear();
                     break;
                 }
@@ -497,8 +488,7 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
             }
 
             if (penType != ERASER &&
-            penStyle != SPLINE)
-            {
+            penStyle != SPLINE){
                 update();
             }
 
@@ -523,17 +513,14 @@ void DrawingWidget::drawRecognizedShape(
         decision == RECOG_TRIANGLE ||
         decision == RECOG_SQUARE;
 
-    if (lineStyle == FILLED && isClosedShape)
-    {
+    if (lineStyle == FILLED && isClosedShape){
         painter.setBrush(pen.color());
     }
-    else
-    {
+    else{
         painter.setBrush(Qt::NoBrush);
     }
 
-    switch (decision)
-    {
+    switch (decision) {
     case RECOG_LINE:
         painter.drawLine(
             variables.points[0],
@@ -548,7 +535,6 @@ void DrawingWidget::drawRecognizedShape(
         break;
 
     case RECOG_TRIANGLE:
-    {
         QPolygonF triangle;
 
         for (int i = 0; i < 3; i++)
@@ -558,10 +544,9 @@ void DrawingWidget::drawRecognizedShape(
 
         painter.drawPolygon(triangle);
         break;
-    }
+
 
     case RECOG_SQUARE:
-    {
         QPolygonF rectangle;
 
         for (int i = 0; i < 4; i++)
@@ -571,8 +556,7 @@ void DrawingWidget::drawRecognizedShape(
 
         painter.drawPolygon(rectangle);
         break;
-    }
-
+        
     default:
         break;
     }
