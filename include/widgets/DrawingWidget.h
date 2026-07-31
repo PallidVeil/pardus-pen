@@ -94,7 +94,7 @@ public:
                              const StrokeVariables &variables,
                              const StrokeResult &result);
     int performStrokeRecognition();
-    void applyRecognitionResult(int decision);
+    void applyRecognitionResult(int decision , QImage &backgroundImage);
 #ifdef LIBARCHIVE
     void saveAll(QString filename);
     void loadArchive(const QString& filename);

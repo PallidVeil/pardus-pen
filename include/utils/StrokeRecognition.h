@@ -80,3 +80,4 @@ int stroke_recognition(const QMap<long long, QPointF> &points,
 #define RECOG_SQUARE 4
 #define RECOG_DISTANCE_ERROR 6
 #define RECOG_LENGTH_ERROR 7
+#define RECOG_START_ERROR 8

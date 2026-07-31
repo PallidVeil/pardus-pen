@@ -247,9 +247,9 @@ int DrawingWidget::performStrokeRecognition(){
     return decision;
 }
 
-void applyRecognitionResult(int decision){
+void DrawingWidget::applyRecognitionResult(int decision , QImage &backgroundImage){
     // Merge the user's freehand drawing with the previous canvas.
-    QImage freehandImage = background->image.copy();
+    QImage freehandImage = backgroundImage.copy();
     QPainter freehandPainter(&freehandImage);
     freehandPainter.drawImage(QPointF(0, 0), image.toImage());
     freehandPainter.end();

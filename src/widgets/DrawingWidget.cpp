@@ -421,7 +421,7 @@ void DrawingWidget::eventHandler(int source, int type, int id, QPointF pos, floa
                     update();
                 }
                 if (recognitionSuccessful){
-                    applyRecognitionResult(decision);
+                    applyRecognitionResult(decision , background->image);
                 }
                 if (penType != ERASER){
                     background->applyImage(image.toImage());
