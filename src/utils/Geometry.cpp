@@ -1,5 +1,6 @@
 #include <widgets/DrawingWidget.h>
 #include <constants.h>
+#include <utils/StrokeRecognition.h>
 
 #include <math.h>
 
@@ -159,4 +160,70 @@ void DrawingWidget::drawLineToFunc(qint64 id, qreal pressure) {
     last_begin = startPoint;
     last_end = endPoint;
 
+}
+
+void DrawingWidget::drawRecognizedShape(
+    int decision,
+    const StrokeVariables &variables,
+    const StrokeResult &result){
+    painter.begin(&image);
+
+    painter.setPen(pen);
+
+    const bool isClosedShape =
+        decision == RECOG_CIRCLE ||
+        decision == RECOG_TRIANGLE ||
+        decision == RECOG_SQUARE;
+
+    if (lineStyle == FILLED && isClosedShape){
+        painter.setBrush(pen.color());
+    }
+    else {
+        painter.setBrush(Qt::NoBrush);
+    }
+
+    switch (decision) {
+    case RECOG_LINE:
+        painter.drawLine(
+            variables.points[0],
+            variables.points[variables.pointCount - 1]);
+        break;
+
+    case RECOG_CIRCLE:
+        painter.drawEllipse(
+            result.circleCenter,
+            result.circleRadius,
+            result.circleRadius);
+        break;
+
+    case RECOG_TRIANGLE:
+    {
+        QPolygonF triangle;
+
+        for (int i = 0; i < 3; i++) {
+            triangle << result.idealCorners[i];
+        }
+
+        painter.drawPolygon(triangle);
+        break;
+    }
+
+    case RECOG_SQUARE:
+    {
+        QPolygonF rectangle;
+
+        for (int i = 0; i < 4; i++) {
+            rectangle << result.idealCorners[i];
+        }
+
+        painter.drawPolygon(rectangle);
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    painter.end();
+    update();
 }

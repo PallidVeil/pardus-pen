@@ -7,5 +7,3 @@ debian/files
 debian/debhelper-build-stamp
 debian/pardus-pen.substvars
 debian/pardus-pen.debhelper.log
-.vscode/performance.csv
-performance.csv
